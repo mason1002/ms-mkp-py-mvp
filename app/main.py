@@ -27,6 +27,11 @@ def _require_token(token: str | None) -> str:
     return token
 
 
+def _require_admin() -> None:
+    if not settings.is_admin_enabled():
+        raise HTTPException(status_code=404, detail="Not found")
+
+
 @app.get("/landing", response_class=HTMLResponse)
 def landing(token: str | None = None) -> HTMLResponse:
     token = _require_token(token)
@@ -113,3 +118,207 @@ async def api_webhook(request: Request) -> JSONResponse:
             pass
 
     return JSONResponse({"ok": True})
+
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin_home() -> HTMLResponse:
+        _require_admin()
+
+        mode = settings.marketplace_mode.lower()
+        body = _ADMIN_HTML.replace("__MODE__", mode)
+        return HTMLResponse(body)
+
+
+_ADMIN_HTML = """<!doctype html>
+<html lang=\"en\">
+    <head>
+        <meta charset=\"utf-8\" />
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+        <title>Admin - Marketplace SaaS MVP</title>
+        <style>
+            body {{ font-family: Segoe UI, Arial, sans-serif; margin: 24px; }}
+            .row {{ display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }}
+            input, select, button {{ padding: 8px; font-size: 14px; }}
+            button {{ cursor: pointer; }}
+            .muted {{ color: #666; }}
+            pre {{ background: #f6f8fa; padding: 12px; overflow: auto; border-radius: 6px; }}
+            table {{ border-collapse: collapse; width: 100%; }}
+            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+            th {{ background: #fafafa; }}
+        </style>
+    </head>
+    <body>
+        <h1>Admin</h1>
+        <p class=\"muted\">Mode: <b>__MODE__</b>. This page is intended for demo/dev only.</p>
+
+        <div class=\"row\">
+            <label>Subscription ID
+                <input id=\"subId\" placeholder=\"(optional)\" size=\"44\" />
+            </label>
+            <button onclick=\"loadSubs()\">Load subscriptions</button>
+            <button onclick=\"loadEvents()\">Load webhook events</button>
+        </div>
+
+        <h2>Update status</h2>
+        <div class=\"row\">
+            <label>Status
+                <select id=\"newStatus\">
+                    <option>PendingFulfillmentStart</option>
+                    <option>Subscribed</option>
+                    <option>Suspended</option>
+                    <option>Unsubscribed</option>
+                </select>
+            </label>
+            <button onclick=\"updateStatus()\">Update</button>
+            <span id=\"statusMsg\" class=\"muted\"></span>
+        </div>
+
+        <h2>Subscriptions</h2>
+        <div id=\"subs\"></div>
+
+        <h2>Webhook events</h2>
+        <div id=\"events\"></div>
+
+        <h2>Raw JSON</h2>
+        <pre id=\"raw\">(select an item)</pre>
+
+        <script>
+            function qs() {{
+                const subId = document.getElementById('subId').value.trim();
+                const params = new URLSearchParams();
+                if (subId) params.set('subscriptionId', subId);
+                params.set('limit', '50');
+                params.set('offset', '0');
+                return params.toString();
+            }}
+
+            function setRaw(obj) {{
+                document.getElementById('raw').textContent = JSON.stringify(obj, null, 2);
+            }}
+
+            function renderTable(containerId, rows, columns) {{
+                const container = document.getElementById(containerId);
+                if (!rows || rows.length === 0) {{
+                    container.innerHTML = '<p class="muted">(empty)</p>';
+                    return;
+                }}
+                let html = '<table><thead><tr>' + columns.map(c => `<th>${c.label}</th>`).join('') + '</tr></thead><tbody>';
+                for (const r of rows) {{
+                    html += '<tr>' + columns.map(c => {
+                        const v = r[c.key];
+                        const text = (v === null || v === undefined) ? '' : String(v);
+                        return `<td>${text}</td>`;
+                    }).join('') + '</tr>';
+                }}
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            }}
+
+            async function loadSubs() {{
+                const resp = await fetch('/admin/api/subscriptions?' + qs());
+                const data = await resp.json();
+                setRaw(data);
+                renderTable('subs', data.items, [
+                    {{ key: 'id', label: 'id' }},
+                    {{ key: 'offerId', label: 'offerId' }},
+                    {{ key: 'planId', label: 'planId' }},
+                    {{ key: 'quantity', label: 'quantity' }},
+                    {{ key: 'status', label: 'status' }},
+                    {{ key: 'updatedAt', label: 'updatedAt' }},
+                ]);
+            }}
+
+            async function loadEvents() {{
+                const params = new URLSearchParams(qs());
+                params.set('includePayload', 'false');
+                const resp = await fetch('/admin/api/webhook-events?' + params.toString());
+                const data = await resp.json();
+                setRaw(data);
+                renderTable('events', data.items, [
+                    {{ key: 'id', label: 'id' }},
+                    {{ key: 'subscriptionId', label: 'subscriptionId' }},
+                    {{ key: 'action', label: 'action' }},
+                    {{ key: 'receivedAt', label: 'receivedAt' }},
+                ]);
+            }}
+
+            async function updateStatus() {{
+                const subId = document.getElementById('subId').value.trim();
+                const status = document.getElementById('newStatus').value;
+                const msg = document.getElementById('statusMsg');
+                msg.textContent = '';
+                if (!subId) {{
+                    msg.textContent = 'Please enter subscriptionId first.';
+                    return;
+                }}
+                const resp = await fetch('/admin/api/subscriptions/' + encodeURIComponent(subId) + '/status', {{
+                    method: 'POST',
+                    headers: {{ 'content-type': 'application/json' }},
+                    body: JSON.stringify({{ status }})
+                }});
+                const data = await resp.json();
+                setRaw(data);
+                msg.textContent = resp.ok ? 'Updated.' : ('Failed: ' + (data.detail || resp.status));
+                await loadSubs();
+            }}
+        </script>
+    </body>
+</html>"""
+
+
+@app.get("/admin/api/subscriptions")
+def admin_list_subscriptions(
+        limit: int = 50,
+        offset: int = 0,
+        subscriptionId: str | None = None,
+) -> JSONResponse:
+        _require_admin()
+        items = repo.list_subscriptions(limit=limit, offset=offset, subscription_id=subscriptionId)
+        return JSONResponse({"items": items, "count": len(items)})
+
+
+@app.get("/admin/api/subscriptions/{subscription_id}")
+def admin_get_subscription(subscription_id: str) -> JSONResponse:
+        _require_admin()
+        record = repo.get_subscription(subscription_id)
+        if not record:
+                raise HTTPException(status_code=404, detail="Unknown subscriptionId")
+        return JSONResponse(
+                {
+                        "id": record.id,
+                        "offerId": record.offer_id,
+                        "planId": record.plan_id,
+                        "quantity": record.quantity,
+                        "status": record.status,
+                        "rawResolve": record.raw_resolve,
+                }
+        )
+
+
+@app.post("/admin/api/subscriptions/{subscription_id}/status")
+def admin_update_subscription_status(subscription_id: str, payload: dict[str, Any] = Body(...)) -> JSONResponse:
+        _require_admin()
+        status = payload.get("status")
+        if not status:
+                raise HTTPException(status_code=400, detail="Missing status")
+        if not repo.get_subscription(subscription_id):
+                raise HTTPException(status_code=404, detail="Unknown subscriptionId")
+        repo.update_status(subscription_id, str(status))
+        return JSONResponse({"ok": True, "subscriptionId": subscription_id, "status": status})
+
+
+@app.get("/admin/api/webhook-events")
+def admin_list_webhook_events(
+        limit: int = 50,
+        offset: int = 0,
+        subscriptionId: str | None = None,
+        includePayload: bool = True,
+) -> JSONResponse:
+        _require_admin()
+        items = repo.list_webhook_events(
+                limit=limit,
+                offset=offset,
+                subscription_id=subscriptionId,
+                include_payload=includePayload,
+        )
+        return JSONResponse({"items": items, "count": len(items)})

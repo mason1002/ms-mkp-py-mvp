@@ -178,3 +178,64 @@ class Repository:
                 ),
             )
             conn.commit()
+
+    def list_subscriptions(self, *, limit: int = 50, offset: int = 0, subscription_id: str | None = None) -> list[dict[str, Any]]:
+        limit = max(1, min(int(limit), 500))
+        offset = max(0, int(offset))
+
+        sql = "SELECT id, offer_id, plan_id, quantity, status, created_at, updated_at FROM subscriptions"
+        params: list[Any] = []
+        if subscription_id:
+            sql += " WHERE id = ?"
+            params.append(subscription_id)
+        sql += " ORDER BY updated_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        with connect(self._db_path) as conn:
+            rows = conn.execute(sql, tuple(params)).fetchall()
+            return [
+                {
+                    "id": row["id"],
+                    "offerId": row["offer_id"],
+                    "planId": row["plan_id"],
+                    "quantity": row["quantity"],
+                    "status": row["status"],
+                    "createdAt": row["created_at"],
+                    "updatedAt": row["updated_at"],
+                }
+                for row in rows
+            ]
+
+    def list_webhook_events(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+        subscription_id: str | None = None,
+        include_payload: bool = True,
+    ) -> list[dict[str, Any]]:
+        limit = max(1, min(int(limit), 500))
+        offset = max(0, int(offset))
+
+        sql = "SELECT id, subscription_id, action, payload_json, received_at FROM webhook_events"
+        params: list[Any] = []
+        if subscription_id:
+            sql += " WHERE subscription_id = ?"
+            params.append(subscription_id)
+        sql += " ORDER BY id DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        with connect(self._db_path) as conn:
+            rows = conn.execute(sql, tuple(params)).fetchall()
+            events: list[dict[str, Any]] = []
+            for row in rows:
+                item: dict[str, Any] = {
+                    "id": row["id"],
+                    "subscriptionId": row["subscription_id"],
+                    "action": row["action"],
+                    "receivedAt": row["received_at"],
+                }
+                if include_payload:
+                    item["payload"] = json.loads(row["payload_json"]) if row["payload_json"] else None
+                events.append(item)
+            return events

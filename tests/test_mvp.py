@@ -11,10 +11,23 @@ def _new_client(tmp_path: Path) -> TestClient:
     os.environ["MARKETPLACE_MODE"] = "mock"
     os.environ["DATABASE_PATH"] = str(tmp_path / "app.db")
 
+    if "ADMIN_ENABLED" in os.environ:
+        del os.environ["ADMIN_ENABLED"]
+
     # Import after env is set (module-level settings are read on import)
     import app.main as main  # noqa: WPS433
     importlib.reload(main)
 
+    return TestClient(main.app)
+
+
+def _new_client_with_admin(tmp_path: Path, *, enabled: bool) -> TestClient:
+    os.environ["MARKETPLACE_MODE"] = "mock"
+    os.environ["DATABASE_PATH"] = str(tmp_path / "app.db")
+    os.environ["ADMIN_ENABLED"] = "true" if enabled else "false"
+
+    import app.main as main  # noqa: WPS433
+    importlib.reload(main)
     return TestClient(main.app)
 
 
@@ -60,3 +73,38 @@ def test_mock_subscription_id_is_deterministic_across_fresh_dbs(tmp_path: Path) 
     sub2 = client2.post("/api/resolve", json={"token": token}).json()["subscriptionId"]
 
     assert sub1 == sub2
+
+
+def test_admin_page_enabled_in_mock_by_default(tmp_path: Path) -> None:
+    client = _new_client(tmp_path)
+    r = client.get("/admin")
+    assert r.status_code == 200
+    assert "Admin" in r.text
+
+
+def test_admin_api_lists_subscriptions(tmp_path: Path) -> None:
+    client = _new_client(tmp_path)
+    sub_id = client.post("/api/resolve", json={"token": "t1"}).json()["subscriptionId"]
+
+    r = client.get("/admin/api/subscriptions")
+    assert r.status_code == 200
+    items = r.json()["items"]
+    assert any(i["id"] == sub_id for i in items)
+
+
+def test_admin_can_update_status(tmp_path: Path) -> None:
+    client = _new_client(tmp_path)
+    sub_id = client.post("/api/resolve", json={"token": "t2"}).json()["subscriptionId"]
+
+    r = client.post(f"/admin/api/subscriptions/{sub_id}/status", json={"status": "Suspended"})
+    assert r.status_code == 200
+
+    r2 = client.get(f"/admin/api/subscriptions/{sub_id}")
+    assert r2.status_code == 200
+    assert r2.json()["status"] == "Suspended"
+
+
+def test_admin_disabled_returns_404(tmp_path: Path) -> None:
+    client = _new_client_with_admin(tmp_path, enabled=False)
+    r = client.get("/admin")
+    assert r.status_code == 404
