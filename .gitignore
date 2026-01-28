@@ -1,0 +1,26 @@
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.py[cod]
+*.pyd
+
+.venv/
+venv/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+*.db
+*.sqlite
+*.sqlite3
+
+# Local data dir used in README examples
+data/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
