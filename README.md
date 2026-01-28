@@ -1,6 +1,6 @@
 # Python SaaS Fulfillment MVP (FastAPI)
 
-这是一个小而自包含的 MVP，用来覆盖 Microsoft Marketplace（商业市场）SaaS Fulfillment 的关键触点：
+这是一个MVP，用来覆盖 Microsoft Marketplace（商业市场）SaaS Fulfillment 的关键触点：
 
 - Landing page（`/landing?token=...`）：接收 Marketplace 重定向带来的 `token` 并调用 resolve
 - Resolve（`POST /api/resolve`）与 Activate（`POST /api/activate`）接口
@@ -20,7 +20,8 @@
 cd ms-mkp-py-mvp
 ..\.venv\Scripts\python -m pip install -r requirements.txt
 $env:MARKETPLACE_MODE='mock'
-$env:DATABASE_PATH="$env:TEMP\ms-mkp-py-mvp.db"
+New-Item -ItemType Directory -Force "$PWD\.tmp" | Out-Null
+$env:DATABASE_PATH="$PWD\.tmp\ms-mkp-py-mvp.db"
 ..\.venv\Scripts\uvicorn app.main:app --reload
 ```
 
@@ -34,7 +35,7 @@ $env:DATABASE_PATH="$env:TEMP\ms-mkp-py-mvp.db"
 
 ```powershell
 # 删除临时 SQLite 文件（如果你按上面设置了 DATABASE_PATH）
-Remove-Item -Force -ErrorAction SilentlyContinue "$env:TEMP\ms-mkp-py-mvp.db"
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$PWD\.tmp"
 
 # 清理测试缓存（如果你跑过 pytest）
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue .pytest_cache
