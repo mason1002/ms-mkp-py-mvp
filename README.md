@@ -63,10 +63,6 @@ cd ms-mkp-py-mvp
 ..\.venv\Scripts\python -m pytest -q
 ```
 
-## 验证 mock 的“确定性”
-
-mock 模式下 subscriptionId 对同 token 保持一致，方便重复验证/测试。
-
 ## Live 模式前置条件（概览）
 
 - 具备 Marketplace Fulfillment 权限的 Entra ID 应用（client credentials）
