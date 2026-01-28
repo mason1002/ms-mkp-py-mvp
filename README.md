@@ -65,26 +65,7 @@ cd ms-mkp-py-mvp
 
 ## 验证 mock 的“确定性”
 
-1) 使用 `mock` 模式启动服务。
-2) 使用相同 token 调用两次 resolve，但每次都使用一个全新的（空）数据库。
-
-示例（PowerShell），使用两个不同的 DB 路径：
-
-```powershell
-$env:MARKETPLACE_MODE='mock'
-
-$env:DATABASE_PATH="$PWD\\data\\db1.db"
-..\.venv\Scripts\uvicorn app.main:app --reload
-# 在另一个终端里：
-# curl.exe -sS -X POST http://127.0.0.1:8000/api/resolve -H "Content-Type: application/json" -d '{"token":"same-token"}'
-
-# 停止服务后，再：
-$env:DATABASE_PATH="$PWD\\data\\db2.db"
-..\.venv\Scripts\uvicorn app.main:app --reload
-# 使用同一个 token 再调用一次 resolve。
-```
-
-对于同一个 `token`，返回的 `subscriptionId` 应该完全相同。
+mock 模式下 subscriptionId 对同 token 保持一致，方便重复验证/测试。
 
 ## Live 模式前置条件（概览）
 
