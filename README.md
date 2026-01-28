@@ -20,6 +20,7 @@
 cd ms-mkp-py-mvp
 ..\.venv\Scripts\python -m pip install -r requirements.txt
 $env:MARKETPLACE_MODE='mock'
+$env:DATABASE_PATH="$env:TEMP\ms-mkp-py-mvp.db"
 ..\.venv\Scripts\uvicorn app.main:app --reload
 ```
 
@@ -30,6 +31,22 @@ Open:
 访问：
 - `http://127.0.0.1:8000/healthz`
 - `http://127.0.0.1:8000/landing?token=demo-token`
+
+### 清理（可选）
+
+停止服务（在运行 uvicorn 的终端按 `Ctrl+C`）后，如果你希望本地验证“不留痕”，可以执行：
+
+```powershell
+# 删除临时 SQLite 文件（如果你按上面设置了 DATABASE_PATH）
+Remove-Item -Force -ErrorAction SilentlyContinue "$env:TEMP\ms-mkp-py-mvp.db"
+
+# 清理测试缓存（如果你跑过 pytest）
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue .pytest_cache
+
+# 可选：取消环境变量（仅影响当前 PowerShell 会话）
+Remove-Item -ErrorAction SilentlyContinue Env:MARKETPLACE_MODE
+Remove-Item -ErrorAction SilentlyContinue Env:DATABASE_PATH
+```
 
 ## 本地用 Docker 运行（更贴近 ACA 运行形态）
 
