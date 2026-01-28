@@ -24,10 +24,6 @@ $env:DATABASE_PATH="$env:TEMP\ms-mkp-py-mvp.db"
 ..\.venv\Scripts\uvicorn app.main:app --reload
 ```
 
-Open:
-- `http://127.0.0.1:8000/healthz`
-- `http://127.0.0.1:8000/landing?token=demo-token`
-
 访问：
 - `http://127.0.0.1:8000/healthz`
 - `http://127.0.0.1:8000/landing?token=demo-token`
