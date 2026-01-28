@@ -34,6 +34,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$deployStart = Get-Date
+
 function Assert-Command($name) {
   if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
     throw "Missing required command: $name"
@@ -135,6 +137,30 @@ $fqdnArgs = @(
   "-o", "tsv"
 )
 $fqdn = az @fqdnArgs
-Write-Host "Deployed. Test URLs:"
+
+$elapsed = (Get-Date) - $deployStart
+$elapsedText = "{0:00}m:{1:00}s" -f [int]$elapsed.TotalMinutes, $elapsed.Seconds
+
+$landingUrl = "https://$fqdn/landing"
+$webhookUrl = "https://$fqdn/api/webhook"
+
+Write-Host ""
+Write-Host "✅ If the installation completed without error complete the following checklist:"
+Write-Host "   🔵 Add the following URL(s) in Partner Center SaaS Technical Configuration:"
+Write-Host "      ➡️ Landing Page section:       $landingUrl"
+Write-Host "      ➡️ Connection Webhook section: $webhookUrl"
+
+if ($MarketplaceMode -eq "live") {
+  Write-Host "      ➡️ Tenant ID:                  $TenantId"
+  Write-Host "      ➡️ Application (client) ID:     $ClientId"
+} else {
+  Write-Host "      ➡️ Tenant ID:                  (live mode only)"
+  Write-Host "      ➡️ Application (client) ID:     (live mode only)"
+}
+
+Write-Host ""
+Write-Host "Deployed. Quick test URLs:"
 Write-Host "  https://$fqdn/healthz"
 Write-Host "  https://$fqdn/landing?token=demo-token"
+Write-Host ""
+Write-Host "Deployment Complete in $elapsedText"
