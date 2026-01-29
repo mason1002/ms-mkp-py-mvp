@@ -196,6 +196,23 @@ _ADMIN_HTML = """<!doctype html>
                 document.getElementById('raw').textContent = JSON.stringify(obj, null, 2);
             }
 
+            function formatTime(v) {
+                if (!v) return '';
+                const d = new Date(v);
+                if (Number.isNaN(d.getTime())) return String(v);
+                return new Intl.DateTimeFormat('zh-CN', {
+                    timeZone: 'Asia/Shanghai',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false,
+                    timeZoneName: 'short',
+                }).format(d);
+            }
+
             function renderTable(containerId, rows, columns) {
                 const container = document.getElementById(containerId);
                 if (!rows || rows.length === 0) {
@@ -206,7 +223,8 @@ _ADMIN_HTML = """<!doctype html>
                 for (const r of rows) {
                     html += '<tr>' + columns.map(c => {
                         const v = r[c.key];
-                        const text = (v === null || v === undefined) ? '' : String(v);
+                        const isTimeField = (c.key === 'createdAt' || c.key === 'updatedAt' || c.key === 'receivedAt');
+                        const text = (v === null || v === undefined) ? '' : (isTimeField ? formatTime(v) : String(v));
                         return `<td>${text}</td>`;
                     }).join('') + '</tr>';
                 }
