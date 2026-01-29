@@ -25,6 +25,8 @@ $IMAGE = "$ACR.azurecr.io/marketplace-saas-mvp:1"
 
 ## 2) 创建资源组与 ACR
 
+> ⚠️ 注意：从这里开始执行 `az group create` / `az acr create` 会在你的 Azure 订阅里**真实创建资源**（Resource Group、ACR），并可能产生费用（ACR 存储/出入站等）。请先确认当前登录的订阅与账号。
+
 ```powershell
 az group create -n $RG -l $LOC
 
@@ -53,6 +55,8 @@ az acr build -g $RG -r $ACR -t marketplace-saas-mvp:1 .
 
 ## 4) 创建 Container Apps 环境
 
+> ⚠️ 注意：执行 `az containerapp env create` 会创建 ACA Environment（以及相关的监控/日志依赖资源），开始产生持续费用。
+
 ```powershell
 az provider register --namespace Microsoft.App
 az provider register --namespace Microsoft.OperationalInsights
@@ -64,6 +68,8 @@ az containerapp env create -g $RG -n $ENV -l $LOC
 ## 5) Create the Container App
 
 ## 5) 创建 Container App
+
+> ⚠️ 注意：执行 `az containerapp create` 会创建对公网暴露的真实服务（Container App）。运行实例、日志等都会产生费用；不使用时建议按 README 的清理章节删除整个资源组。
 
 ### Mock mode (no external Marketplace calls)
 
@@ -89,6 +95,8 @@ $FQDN = az containerapp show -g $RG -n $APP --query properties.configuration.ing
 ### Live mode (calls Marketplace Fulfillment APIs)
 
 ### Live 模式（调用真实 Marketplace Fulfillment API）
+
+> ⚠️ 注意：live 模式会调用真实 Marketplace Fulfillment API；请确保使用的是测试/沙箱配置（如适用），并妥善保管 `ENTRA_CLIENT_SECRET`（建议只用 ACA secret，不要明文落盘）。
 
 通常建议把 client secret 存为 ACA **secret**。
 
@@ -128,6 +136,8 @@ az containerapp logs show -g $RG -n $APP --follow
 ## 7) Update to a new image
 
 ## 7) 升级到新镜像版本
+
+> 提示：`az containerapp update` 不会新建资源，但会触发拉取新镜像并滚动更新；运行与日志费用仍会持续。
 
 ```powershell
 $IMAGE = "$ACR.azurecr.io/marketplace-saas-mvp:2"
