@@ -48,15 +48,29 @@ Live 模式（仅在 `MARKETPLACE_MODE=live` 使用）：
 
 ## 1) 本地运行（mock 模式）
 
+说明：下面命令提供两种写法，你任选其一：
+
+- 如果你的 PowerShell 提示符前面已经有 `(.venv)`（说明虚拟环境已激活），用 `python -m ...` 这一组
+- 如果你没有激活虚拟环境，但你的虚拟环境位于仓库父目录的 `.venv`（本工作区常见用法），用 `..\.venv\Scripts\python -m ...` 这一组
+
 ```powershell
 cd ms-mkp-py-mvp
+
+# 方式 A：已激活 venv
+python -m pip install -r requirements.txt
+
+# 方式 B：未激活 venv（父目录有 .venv）
 ..\.venv\Scripts\python -m pip install -r requirements.txt
 
 $env:MARKETPLACE_MODE='mock'
 New-Item -ItemType Directory -Force "$PWD\.tmp" | Out-Null
 $env:DATABASE_PATH="$PWD\.tmp\ms-mkp-py-mvp.db"
 
-..\.venv\Scripts\uvicorn app.main:app --reload
+# 方式 A：已激活 venv
+python -m uvicorn app.main:app --reload
+
+# 方式 B：未激活 venv（父目录有 .venv）
+..\.venv\Scripts\python -m uvicorn app.main:app --reload
 ```
 
 快速验证：
@@ -191,6 +205,11 @@ docker run --rm -p 8000:8000 \
 
 ```powershell
 cd ms-mkp-py-mvp
+
+# 方式 A：已激活 venv
+python -m pytest -q
+
+# 方式 B：未激活 venv（父目录有 .venv）
 ..\.venv\Scripts\python -m pytest -q
 ```
 
