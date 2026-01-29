@@ -30,6 +30,15 @@
 
 说明：在 `mock` 模式下，`subscriptionId` 是一个**由传入 token 推导出来的确定性 UUID**（便于重复测试/对比）。
 
+### token 是什么？和 subscriptionId 有什么区别？
+
+- `token`：由 Microsoft Marketplace（在 Partner Center 配置的 SaaS Technical Configuration 流程里）在用户完成“Get it now/Subscribe/Purchase”等动作后，**重定向到你的 Landing Page** 时作为查询参数带给你的值（例如 `/landing?token=...`）。
+- `token` 的用途：你需要把这个 `token` 传给 Fulfillment 的 **Resolve** 接口，用来换取真正的 `subscriptionId`（以及订阅的基本信息）。
+- `subscriptionId`：订阅的稳定标识。后续的 **Activate**、以及 Marketplace 的 **Webhook 回调** 都是围绕 `subscriptionId` 进行。
+- 实务建议：把 `token` 当作一次性/短期凭证看待（不需要解码），通常只用于 Resolve；服务端一般会缓存 `token -> subscriptionId` 的映射，避免重复 Resolve。
+
+本仓库的 `mock` 模式是为了本地演示方便：同一个 `token` 会映射到同一个确定性的 `subscriptionId`，所以你可以反复跑同一条链路。
+
 ## 配置（环境变量）
 
 通用：
