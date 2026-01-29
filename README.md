@@ -92,7 +92,8 @@ $resp | ConvertTo-Json -Depth 20
 ```powershell
 $subId = $resp.subscriptionId
 
-$act = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/api/activate" -ContentType "application/json" -Body ("{\"subscriptionId\":\"$subId\"}")
+$body = @{ subscriptionId = $subId } | ConvertTo-Json
+$act = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/api/activate" -ContentType "application/json" -Body $body
 $act | ConvertTo-Json -Depth 10
 ```
 
@@ -292,9 +293,6 @@ az group delete -n rg-saas-mvp -y
 
 ## 常见问题
 
-### PowerShell 里不要用多行 curl.exe（容易踩坑）
-
-建议优先使用 `Invoke-RestMethod`（上面所有示例都是它）。
 
 ### live 模式 resolve/activate 失败
 
