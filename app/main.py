@@ -174,10 +174,10 @@ _ADMIN_HTML = """<!doctype html>
         </div>
 
         <h2>Subscriptions</h2>
-        <div id=\"subs\"></div>
+        <div id="subs"><p class="muted">(click "Load subscriptions" to fetch)</p></div>
 
         <h2>Webhook events</h2>
-        <div id=\"events\"></div>
+        <div id="events"><p class="muted">(click "Load webhook events" to fetch)</p></div>
 
         <h2>Raw JSON</h2>
         <pre id=\"raw\">(select an item)</pre>
@@ -261,6 +261,10 @@ _ADMIN_HTML = """<!doctype html>
                 msg.textContent = resp.ok ? 'Updated.' : ('Failed: ' + (data.detail || resp.status));
                 await loadSubs();
             }}
+
+            window.addEventListener('DOMContentLoaded', () => {{
+                loadSubs().catch(err => setRaw({{ error: String(err) }}));
+            }});
         </script>
     </body>
 </html>"""
