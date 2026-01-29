@@ -136,15 +136,15 @@ _ADMIN_HTML = """<!doctype html>
         <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
         <title>Admin - Marketplace SaaS MVP</title>
         <style>
-            body {{ font-family: Segoe UI, Arial, sans-serif; margin: 24px; }}
-            .row {{ display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }}
-            input, select, button {{ padding: 8px; font-size: 14px; }}
-            button {{ cursor: pointer; }}
-            .muted {{ color: #666; }}
-            pre {{ background: #f6f8fa; padding: 12px; overflow: auto; border-radius: 6px; }}
-            table {{ border-collapse: collapse; width: 100%; }}
-            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-            th {{ background: #fafafa; }}
+            body { font-family: Segoe UI, Arial, sans-serif; margin: 24px; }
+            .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+            input, select, button { padding: 8px; font-size: 14px; }
+            button { cursor: pointer; }
+            .muted { color: #666; }
+            pre { background: #f6f8fa; padding: 12px; overflow: auto; border-radius: 6px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #fafafa; }
         </style>
     </head>
     <body>
@@ -183,38 +183,38 @@ _ADMIN_HTML = """<!doctype html>
         <pre id=\"raw\">(select an item)</pre>
 
         <script>
-            function qs() {{
+            function qs() {
                 const subId = document.getElementById('subId').value.trim();
                 const params = new URLSearchParams();
                 if (subId) params.set('subscriptionId', subId);
                 params.set('limit', '50');
                 params.set('offset', '0');
                 return params.toString();
-            }}
+            }
 
-            function setRaw(obj) {{
+            function setRaw(obj) {
                 document.getElementById('raw').textContent = JSON.stringify(obj, null, 2);
-            }}
+            }
 
-            function renderTable(containerId, rows, columns) {{
+            function renderTable(containerId, rows, columns) {
                 const container = document.getElementById(containerId);
-                if (!rows || rows.length === 0) {{
+                if (!rows || rows.length === 0) {
                     container.innerHTML = '<p class="muted">(empty)</p>';
                     return;
-                }}
+                }
                 let html = '<table><thead><tr>' + columns.map(c => `<th>${c.label}</th>`).join('') + '</tr></thead><tbody>';
-                for (const r of rows) {{
+                for (const r of rows) {
                     html += '<tr>' + columns.map(c => {
                         const v = r[c.key];
                         const text = (v === null || v === undefined) ? '' : String(v);
                         return `<td>${text}</td>`;
                     }).join('') + '</tr>';
-                }}
+                }
                 html += '</tbody></table>';
                 container.innerHTML = html;
-            }}
+            }
 
-            async function loadSubs() {{
+            async function loadSubs() {
                 const resp = await fetch('/admin/api/subscriptions?' + qs());
                 const data = await resp.json();
                 setRaw(data);
@@ -226,9 +226,9 @@ _ADMIN_HTML = """<!doctype html>
                     {{ key: 'status', label: 'status' }},
                     {{ key: 'updatedAt', label: 'updatedAt' }},
                 ]);
-            }}
+            }
 
-            async function loadEvents() {{
+            async function loadEvents() {
                 const params = new URLSearchParams(qs());
                 params.set('includePayload', 'false');
                 const resp = await fetch('/admin/api/webhook-events?' + params.toString());
@@ -240,17 +240,17 @@ _ADMIN_HTML = """<!doctype html>
                     {{ key: 'action', label: 'action' }},
                     {{ key: 'receivedAt', label: 'receivedAt' }},
                 ]);
-            }}
+            }
 
-            async function updateStatus() {{
+            async function updateStatus() {
                 const subId = document.getElementById('subId').value.trim();
                 const status = document.getElementById('newStatus').value;
                 const msg = document.getElementById('statusMsg');
                 msg.textContent = '';
-                if (!subId) {{
+                if (!subId) {
                     msg.textContent = 'Please enter subscriptionId first.';
                     return;
-                }}
+                }
                 const resp = await fetch('/admin/api/subscriptions/' + encodeURIComponent(subId) + '/status', {{
                     method: 'POST',
                     headers: {{ 'content-type': 'application/json' }},
@@ -260,11 +260,11 @@ _ADMIN_HTML = """<!doctype html>
                 setRaw(data);
                 msg.textContent = resp.ok ? 'Updated.' : ('Failed: ' + (data.detail || resp.status));
                 await loadSubs();
-            }}
+            }
 
-            window.addEventListener('DOMContentLoaded', () => {{
-                loadSubs().catch(err => setRaw({{ error: String(err) }}));
-            }});
+            window.addEventListener('DOMContentLoaded', () => {
+                loadSubs().catch(err => setRaw({ error: String(err) }));
+            });
         </script>
     </body>
 </html>"""
