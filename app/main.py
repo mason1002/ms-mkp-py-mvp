@@ -219,12 +219,12 @@ _ADMIN_HTML = """<!doctype html>
                 const data = await resp.json();
                 setRaw(data);
                 renderTable('subs', data.items, [
-                    {{ key: 'id', label: 'id' }},
-                    {{ key: 'offerId', label: 'offerId' }},
-                    {{ key: 'planId', label: 'planId' }},
-                    {{ key: 'quantity', label: 'quantity' }},
-                    {{ key: 'status', label: 'status' }},
-                    {{ key: 'updatedAt', label: 'updatedAt' }},
+                    { key: 'id', label: 'id' },
+                    { key: 'offerId', label: 'offerId' },
+                    { key: 'planId', label: 'planId' },
+                    { key: 'quantity', label: 'quantity' },
+                    { key: 'status', label: 'status' },
+                    { key: 'updatedAt', label: 'updatedAt' },
                 ]);
             }
 
@@ -235,10 +235,10 @@ _ADMIN_HTML = """<!doctype html>
                 const data = await resp.json();
                 setRaw(data);
                 renderTable('events', data.items, [
-                    {{ key: 'id', label: 'id' }},
-                    {{ key: 'subscriptionId', label: 'subscriptionId' }},
-                    {{ key: 'action', label: 'action' }},
-                    {{ key: 'receivedAt', label: 'receivedAt' }},
+                    { key: 'id', label: 'id' },
+                    { key: 'subscriptionId', label: 'subscriptionId' },
+                    { key: 'action', label: 'action' },
+                    { key: 'receivedAt', label: 'receivedAt' },
                 ]);
             }
 
@@ -251,11 +251,11 @@ _ADMIN_HTML = """<!doctype html>
                     msg.textContent = 'Please enter subscriptionId first.';
                     return;
                 }
-                const resp = await fetch('/admin/api/subscriptions/' + encodeURIComponent(subId) + '/status', {{
+                const resp = await fetch('/admin/api/subscriptions/' + encodeURIComponent(subId) + '/status', {
                     method: 'POST',
-                    headers: {{ 'content-type': 'application/json' }},
-                    body: JSON.stringify({{ status }})
-                }});
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
                 const data = await resp.json();
                 setRaw(data);
                 msg.textContent = resp.ok ? 'Updated.' : ('Failed: ' + (data.detail || resp.status));
